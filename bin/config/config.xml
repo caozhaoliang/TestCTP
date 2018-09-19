@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="gb2312"?>
+
+<Node>
+	<Server Name="Server" Desc="服务器配置文件父节点名">
+		<Property Name="ListenPort" Value="9091" Desc="服务器侦听端口名称"/>
+		
+	</Server>	
+</Node>	

@@ -12,11 +12,22 @@ using namespace std;
 class Application{
 public:
 	Application(CxmlParse* cfg,int nPort);
+	~Application(){}
 	bool Init();
 	void Start();
 	inline CxmlParse* getXmlConfig(){
 		return m_CfgXml;
 	}
+	bool qryInstrumentList();
+
+public:
+	bool		m_bCodeUpdate;
+	bool		m_bCommRateUpdate;
+	bool		m_bTradeDayChange;
+	bool		m_bMDSubcribe;
+	bool		m_bMDNeedReSubcr;
+	bool		m_bServerIniting;
+	
 private:
 	inline int RegistReadEvent(int fd){
 		epoll_event ev;
@@ -58,7 +69,7 @@ private:
 	int analyseRequest(int fd, CsockClient* pClient);
 	
 	Application();
-	static void* handleCtpConnet(void*);
+	//static void* handleCtpConnet(void*);
 	void readCallBack(int fd);
 	void writeCallBack(int fd);
 	void errorCallBack(int fd);
@@ -67,8 +78,8 @@ private:
 	int			m_listenfd;
 	CxmlParse* 	m_CfgXml;
 	int			m_nPort;
-	CMDApi*		m_mdApi;
-	CTradeApi*	m_TradApi;
+	CMDApi*		m_pMDApi;
+	CTradeApi*	m_pTradeApi;
 	std::map<int,	CsockClient*>		m_clientMap;
 	CBlockingQueue						m_TaskQueue;
 };

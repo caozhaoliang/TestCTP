@@ -48,5 +48,11 @@ class CTPMdSpi:public CThostFtdcMdSpi{
 
 };
 
+class CTPTradeSpi:public CThostFtdcTraderSpi{
+public:
+	CTPTradeSpi(CThostFtdcTraderApi* pClientApi,CTradeApi* pClient,SyncEvent& ev);
+	~CTPTradeSpi();
+};
+
 
 #endif

@@ -61,6 +61,9 @@
 //Json 头文件
 #include "../lib/json.h"
 
+//glog 头文件
+#include "./glog/logging.h"
+
 using namespace std;
 
 
@@ -273,7 +276,7 @@ class SyncEvent{
 			if(!m_manual_reset)	m_signaled = false;//(如果为自动重置，则将信号重置)
 		}
 
-		bool timed_wait(uint32 ms){
+		bool timed_wait(unsigned int ms){
 			struct timeval now;
             struct timespec timeout;
             int retcode;

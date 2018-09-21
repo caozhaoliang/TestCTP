@@ -1,13 +1,39 @@
 #include "./include/application.h"
 #include <pthread.h>
 
+
+/*
+bool		m_bCodeUpdate;
+	bool		m_bCommRateUpdate;
+	bool		m_bTradeDayChange;
+	bool		m_bMDSubcribe;
+	bool		m_bMDNeedReSubcr;
+	bool		m_bServerIniting;
+
+*/
 Application::Application(){
 }
 Application::Application(const CxmlParse* cfgxml,int nPort)
 {
+	m_bCodeUpdate = false;
+	m_bCommRateUpdate = false;
+	m_bTradeDayChange = true;
+	m_bMDSubcribe = false;
+	m_bMDNeedReSubcr = true;
+	m_bServerIniting = true;
 	m_CfgXml = cfgxml;
 	m_nPort = nPort;
+	m_pMDApi = NULL;
+	m_pTradeApi = NULL;
 	Init();
+}
+Application::~Application(){
+
+
+	if(m_pTradeApi != NULL){
+		delete m_pTradeApi;
+		m_pTradeApi = NULL;
+	}
 }
 
 bool Application::Init(){
@@ -19,12 +45,91 @@ bool Application::Init(){
 	}	
 }
 
-void* Application::handleCtpConnet(void* arg){
+bool Application::InitTradeClient(){
+	bool bRet = false;
+	std::string strPassword = getXmlConfig()->getConfig("CTPCfg.Password");
+	std::string strUserID = getXmlConfig()->getConfig("CTPCfg.UserID");
+	std::string strBrokerID = getXmlConfig()->getConfig("CTPCfg.BrokerID");
+	std::string strFrontTradeAddr = getXmlConfig()->getConfig("CTPCfg.TradeAddr");
+	// "tcp://192.168.111.222:8080" - "tcp://1.1.1.1:90"
+	if(strFrontTradeAddr.empty() || strFrontTradeAddr.length() <16 ){
+	//print strFrontTradeAddr
+		delete m_pTradeApi;
+		m_pTradeApi = NULL;
+		return false;
+	}
+	std::vector<std::string> vAddr;
+	vAddr.push_back(strFrontTradeAddr);
+	if(m_pTradeApi == NULL){
+		m_pTradeApi = new CTradeApi(this);
+		CThostFtdcReqUserLoginField fldReqLogin;
+		memset(&fldReqLogin,0,sizeof(CThostFtdcReqUserLoginField));
+		strncpy(fldReqLogin.BrokerID,strBrokerID.c_str(),sizeof(fldReqLogin.BrokerID));
+		strncpy(fldReqLogin.UserID,strUserID.c_str(),sizeof(fldReqLogin.UserID));
+		strncpy(fldReqLogin.Password,strPassword.c_str(),sizeof(fldReqLogin.Password));
+		m_pTradeApi->setReqLoginParam(&fldReqLogin);
+
+		CThostFtdcUserLogoutField fldReqLogout;
+		memset(&fldReqLogout,0,sizeof(CThostFtdcUserLogoutField));
+		strncpy(fldReqLogout.UserID,strUserID.c_str(),sizeof(fldReqLogout.UserID));
+		strncpy(fldReqLogout.BrokerID,strBrokerID.c_str(),sizeof(fldReqLogout.BrokerID));
+		m_pTradeApi->setReqLogoutParam(fldReqLogout);
+
+		CThostFtdcQryInstrumentField fldReqCode;
+		memset(&fldReqCode,0,sizeof(CThostFtdcQryInstrumentField));
+		m_pTradeApi->setQryCodeParam(fldReqCode);
+
+		CThostFtdcQryDepthMarketDataField fldReqMd;
+		memset(&fldReqMd,0,sizeof(CThostFtdcQryDepthMarketDataField));
+		m_pTradeApi->setQryMarketDataParam(fldReqMd);
+
+		CThostFtdcQryInstrumentCommissionRateField fldReqComm;
+		memset(&fldReqComm,0,sizeof(CThostFtdcQryInstrumentCommissionRateField));
+		strncpy(fldReqComm.BrokerID,strBrokerID.c_str(),sizeof(fldReqComm.BrokerID));
+		strncpy(fldReqComm.InvestorID,strUserID.c_str(),sizeof(fldReqComm.InvestorID));
+		m_pTradeApi->setQryInsCommRateParam(fldReqComm);		
+	}
+	if(!m_pTradeApi->getCTPConnStatus()){
+		if(!m_pTradeApi->ConnCTPServer(vAddr)){
+			//Error 连接失败
+			delete m_pTradeApi;
+			m_pTradeApi = NULL;
+			return false;
+		}
+		m_pTradeApi->setCTPConnStatus(true);
+		bRet = true;
+	}
+	if(bRet){
+		if(!m_pTradeApi->getCTPLoginStatus()){
+			if(0 != m_pTradeApi->CacheLogin())
+		}
+	}
+}
+bool Application::qryInstrumentList(){
+	bool bRet = false;
+	
+}
+
+static void* handleCtpConnet(void* arg){
 	//建立并维持与CTP trade Md 的链接并且实时获取行情数据
 	Application* app = (Application*)arg;
 	while(1){
-		if(m_mdApi == NULL){
-			m_mdApi = new CMDApi(app);
+		if(app->m_bCodeUpdate && app->m_bCommRateUpdate && CTime::IsWeekEnd(2.5*60*60)){
+			// 
+			sys::sleep(60);
+			continue;
+		}
+		if(app->m_bTradeDayChange || !app->m_bCodeUpdate){
+			app->m_bServerIniting = true;
+			while(1){
+				if((app->m_bCodeUpdate = app->qryInstrumentList())==true){
+					break;
+				}
+				sys::sleep(1);
+			}
+			//拉取码表完成开始查询行情快照
+			sys::sleep(1);
+			
 		}
 	
 	}
@@ -133,7 +238,44 @@ void Application::readCallBack(int fd){
 	return;
 }
 void Application::writeCallBack(int fd){
-	
+	int nCount=0;
+	std::map<int,CsockClient*>::iterator it = m_clientMap.find(fd);
+	if(it == m_clientMap.end()){
+		//error 
+		return ;
+	}
+	CsockClient* pClient = it->second;
+	//char* pClientIP = pClient->GetClientIP();
+	//int nPort = pClient->GetClientPort();
+	if(NULL == pClient){
+		//error
+		m_clientMap.erase(it);
+		return;
+	}
+	CBuffer* pOutBuf = pClient->wBuffer();
+	if(pOutBuf->GetDataLength() > 0){
+		nCount = ::send(fd,(char*)pOutBuf->GetBuffer(),pOutBuf->GetDataLength(),0);
+		if(nCount < 0){
+			if(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR){
+				RegistWriteEvent(fd);
+			}else{
+				//error 
+				closeClient(pClient);
+			}
+		}else if(nCount == 0){
+			// close by peer 
+			closeClient(pClient);
+			return ;
+		}else{
+			pOutBuf->Delete(nCount);
+		}
+	}
+	if(pOutBuf->GetDataLength() == 0){
+		pOutBuf->Compress();
+	}else{
+		RegistWriteEvent(fd);
+	}
+	return;
 }
 int Application::analyseRequest(int fd, CsockClient* pClient){
 	Json::Value jsonObj;

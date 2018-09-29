@@ -101,13 +101,44 @@ bool Application::InitTradeClient(){
 	}
 	if(bRet){
 		if(!m_pTradeApi->getCTPLoginStatus()){
-			if(0 != m_pTradeApi->CacheLogin())
+			if(0 != m_pTradeApi->CacheLogin()){
+				//Error Login 
+				m_pTradeApi->setCTPLoginStatus(false);
+				bRet = false;
+			}else{
+				m_pTradeApi->setCTPLoginStatus(true);
+				if(m_nTradeDate<m_pTradeApi->getTradeDay()){
+					m_nTradeDate = m_pTradeApi->getTradeDay();
+					m_bTradeDayChange = true;
+					m_bCodeUpdate = false;
+					m_bCommRateUpdate = false;
+				}else{
+					m_bTradeDayChange = false;
+				}
+			}
+			
 		}
 	}
+	return bRet;
 }
 bool Application::qryInstrumentList(){
 	bool bRet = false;
-	
+	if(!InitTradeClient()){
+		//LOG init trade api failed 
+		return bRet;
+	}
+	if(m_bTradeDayChange){
+		if(0 == m_pTradeApi->CacheQryCode()){
+			//LOG qryInstrumentList success 
+			bRet = true;
+		}else{
+			//LOG failed
+		}
+	}else{
+		//LOG needn't update 
+		bRet = true;
+	}
+	return bRet;
 }
 
 static void* handleCtpConnet(void* arg){

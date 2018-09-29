@@ -52,6 +52,14 @@ class CTPTradeSpi:public CThostFtdcTraderSpi{
 public:
 	CTPTradeSpi(CThostFtdcTraderApi* pClientApi,CTradeApi* pClient,SyncEvent& ev);
 	~CTPTradeSpi();
+	bool IsErrorRspInfo(CThostFtdcRspInfoField * pRspInfo);
+protected:
+	virtual void OnRspUserLogin(CThostFtdcRspUserLoginField * pRspUserLogin,CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast);
+	virtual void OnRspQryInstrument(CThostFtdcInstrumentField * pInstrument,CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast);
+private:
+	CThostFtdcTraderApi*	m_traderApi;
+	CTradeApi* 				m_ctpTradeClient;
+	SyncEvent&				m_ev;
 };
 
 

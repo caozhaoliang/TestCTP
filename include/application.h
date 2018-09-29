@@ -27,6 +27,7 @@ public:
 	bool		m_bMDSubcribe;
 	bool		m_bMDNeedReSubcr;
 	bool		m_bServerIniting;
+	int 		m_nTradeDate;
 	
 private:
 	inline int RegistReadEvent(int fd){

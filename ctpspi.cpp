@@ -102,3 +102,54 @@ bool CTPMdSpi::IsErrorRspInfo(CThostFtdcRspInfoField *pRspInfo){
 	return ((NULL != pRspInfo) && (pRspInfo->ErrorID != 0));
 }
 
+
+CTPTradeSpi::CTPTradeSpi(CThostFtdcTraderApi * pClientApi,CTradeApi * pClient,SyncEvent & ev):
+		m_ctpTradeClient(pClient),m_traderApi(pClientApi),m_ev(ev)
+{
+}
+
+CTPTradeSpi::~CTPTradeSpi(){
+	if(NULL != m_ctpTradeClient){
+		m_ctpTradeClient=NULL;
+	}
+}
+CTPTradeSpi::IsErrorRspInfo(CThostFtdcRspInfoField * pRspInfo){
+	return ((NULL != pRspInfo) && (pRspInfo->ErrorID != 0));
+}
+void CTPTradeSpi::OnRspUserLogin(CThostFtdcRspUserLoginField * pRspUserLogin,
+									CThostFtdcRspInfoField * pRspInfo,
+									int nRequestID,bool bIsLast)
+{
+	if(NULL == pRspUserLogin){
+		//LOG error for login
+		m_ev.signal();
+		return ;
+	}
+	if(IsErrorRspInfo(pRspInfo)){
+		//LOG error for login
+		m_ev.signal();
+		return ;
+	}
+	if(strlen(pRspUserLogin->TradingDay) != 0){
+		m_ctpTradeClient->setTradeDay(atoi(pRspUserLogin->TradingDay));
+	}
+	m_ctpTradeClient->setCTPLoginStatus(true);
+	m_ev.signal();
+	return ;
+}
+void CTPTradeSpi::OnRspQryInstrument(CThostFtdcInstrumentField * pInstrument,
+									CThostFtdcRspInfoField * pRspInfo,
+									int nRequestID,bool bIsLast)
+{
+	if(NULL == pInstrument){
+		//
+		m_ev.signal();
+		return ;
+	}
+	if(IsErrorRspInfo(pRspInfo)){
+		//
+		m_ev.signal();
+		return ;
+	}
+	
+}

@@ -64,8 +64,16 @@ public:
 	inline void setReqLogoutParam(CThostFtdcUserLogoutField* fldReqLogout){
 		memmove(&m_ReqLogout,fldReqLogout,sizeof(CThostFtdcUserLogoutField));
 	}
+	inline void setTradeDay(int nTradeDate){
+		m_nTradeDate = nTradeDate;
+	}
+	inline int getTradeDay(){
+		return m_nTradeDate;
+	}
+
 public:
 	int CacheLogin();
+	int CacheQryCode();
 private:
 	Application* 					m_App;
 	CThostFtdcTraderApi*			m_pTraderApi;
@@ -73,6 +81,7 @@ private:
 	SyncEvent						m_ev;
 	std::string 					m_strFlowPath;
 	std::string						m_strUserID;
+	int								m_nTradeDate;
 	bool							m_bConnStatus;
 	bool							m_bLoginStatus;
 	//CThostFtdcReqAuthenticateField					m_Authen;				//请求认证参数

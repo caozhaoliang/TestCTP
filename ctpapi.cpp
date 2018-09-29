@@ -99,6 +99,21 @@ int CTradeApi::CacheLogin(){
 	}
 	return nRet;
 }
+int CTradeApi::CacheQryCode(){
+	if(NULL == m_pTraderApi){
+		return -1;
+	}
+	int nRet = m_pTraderApi->ReqQryInstrument(&m_ReqCode,10001);
+	if(0 == nRet){
+		if(!m_ev.timed_wait(5000)){
+			//LOG error timeout
+			return -1;
+		}
+	}else{
+		// LOG error 
+	}
+	return nRet;
+}
 bool CTradeApi::ConnCTPServer(std::vector<std::string>& vAddr){
 	if(vAddr.empty()){
 		return false;

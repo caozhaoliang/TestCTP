@@ -59,6 +59,67 @@ bool CMDApi::Connect2MdServer(const std::vector<std::string>& vAddr){
 	}
 	return true;			
 }
+bool CMDApi::LoginMdServer(){
+	if(NULL == m_mdApi){
+		return false;
+	}
+	CThostFtdcReqUserLoginField reqUserLogin;
+	memset(&reqUserLogin,0,sizeof(CThostFtdcReqUserLoginField));
+	std::string strUserID = m_App->getXmlConfig().getConfig("Server.UserID");
+	std::string strPassword = m_App->getXmlConfig().getConfig("Server.Password");
+	std::string strBrokerID = m_App->getXmlConfig().getConfig("Server.BrokerID");
+	strncpy(reqUserLogin.UserID,strUserID.c_str(),sizeof(reqUserLogin.UserID));
+	strncpy(reqUserLogin.Password,strPassword.c_str(),sizeof(reqUserLogin.Password));
+	strncpy(reqUserLogin.BrokerID,strBrokerID.c_str(),sizeof(reqUserLogin.BrokerID));
+	int nRet = m_mdApi->ReqUserLogin(&reqUserLogin,10001);
+	if(0 == nRet){
+		if(!m_ev.timed_wait(6000)){
+			//
+			return false;
+		}else{
+			return true;
+		}		
+	}
+	return false;
+}
+bool CMDApi::LogoutMdServer(){
+	if(NULL == m_mdApi){
+		return false;
+	}
+	CThostFtdcUserLogoutField reqUserLogout;
+	std::string strUserID = m_App->getXmlConfig().getConfig("Server.UserID");
+	std::string strBrokerID = m_App->getXmlConfig().getConfig("Server.BrokerID");
+	strncpy(reqUserLogout.UserID,strUserID.c_str(),sizeof(reqUserLogout.UserID));
+	strncpy(reqUserLogout.BrokerID,strBrokerID.c_str(),sizeof(reqUserLogout.BrokerID));
+	int nRet = m_mdApi->ReqUserLogout(&reqUserLogout,10001);
+	if(0 != nRet){
+		//LOG logout failed
+		return false;
+	}
+	return true;
+}
+bool CMDApi::SubscriberMd(std::vector<std::string>& vCode){
+	if(NULL == m_mdApi){
+		return false;
+	}
+	int nCount = vCode.size();
+	char* Instruments[nCount] ;
+	std::vector<std::string>::iterator it = vCode.beign();
+	for(int i = 0;i< nCount && it!=vCode.end();++i,++it){
+		Instruments[i] =(char*)it->c_str();
+	}
+	int nRet = m_mdApi->SubscribeMarketData(Instruments,nCount);
+	if(nRet != 0 ){
+		//LOG nRet
+		return false;
+	}
+	if(!m_ev.timed_wait(6000)){
+		//
+		return false;
+	}
+	return true;
+}
+
 
 CTradeApi::CTradeApi(Application * pApp):m_App(pApp)
 {
@@ -113,6 +174,21 @@ int CTradeApi::CacheQryCode(){
 		// LOG error 
 	}
 	return nRet;
+}
+int CTradeApi::CacheQryMd(){
+	if(NULL == m_pTraderApi){
+		return -1;
+	}
+	int nRet = m_pTraderApi->ReqQryDepthMarketData(&m_ReqMd,10001);
+	if(0 == nRet){
+		if(!m_ev.timed_wait(6000)){
+			//
+			return -1;
+		}
+		return nRet;
+	}else{
+		return -1;
+	}
 }
 bool CTradeApi::ConnCTPServer(std::vector<std::string>& vAddr){
 	if(vAddr.empty()){

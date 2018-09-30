@@ -106,6 +106,20 @@ typedef struct tagInstrumentBaseInfo{
 	char	CombinationType;				//组合类型
 }InstrumentBaseInfo;
 
+//手续费率信息
+typedef struct tagCommissionChargeInfo{
+	char	InstrumentID[31];			//合约ID
+	char 	InvestorRange;				//投资者范围
+	char	BrokerID[11];				//经纪公司代码
+	char	InvestorID[13];				//投资者代码
+	double	OpenRatioByMoney;			//开仓手续费率
+	double	OpenRatioByVolume;			//开仓手续费
+	double	CloseRatioByMoney;			//平仓手续费率
+	double	CloseRatioByVolume;			//平仓手续费
+	double	CloseTodayRatioByMoney;		//平今手续费率
+	double	CloseTodayRatioByVolume;	//平今手续费
+}CommissionChargeInfo;
+
 
 typedef struct ctpTask{
 	int								nSockFd;

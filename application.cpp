@@ -140,7 +140,93 @@ bool Application::qryInstrumentList(){
 	}
 	return bRet;
 }
+bool Application::subscribeMd(bool& bCodeEmpty){
+	if(NULL == m_pMDApi){
+		m_pMDApi = new CMDApi(this);
+	}else{
+		m_pMDApi->LogoutMdServer();
+		delete m_pMDApi;
+		m_pMDApi = NULL;
+		m_pMDApi = new CMDApi(this);
+	}
+	bool bRet = true;
+	if(!m_pMDApi->GetMdConnStatus()){
+		std::vector<std::string> vMdAddr;
+		std::string strMdAddr = m_CfgXml->getConfig("Server.MdAddr");
+		vMdAddr.push_back(strMdAddr);
+		if(!m_pMDApi->Connect2MdServer(vMdAddr)){
+			//
+			bRet =  false;
+		}else{
+			bRet = true;
+		}
+	}
+	if(bRet && m_pMDApi->GetMdConnStatus()&& !m_pMDApi->GetMdLoginStatus()){
+		if(!m_pMDApi->LoginMdServer()){
+			bRet = false;
+		}else{
+			bRet = true;
+		}
+	}
+	if(bRet){
+		std::vector<std::string> vNeedSubcriCode;
+		std::map<std::string,InstrumentBaseInfo>::iterator it = m_LastMd.begin();
+		for(;it != m_LastMd.end(); ++it){
+			char chProductClass = it->second.ProductClass;
+			if(chProductClass == '1' || chProductClass == '2' || chProductClass == '6'){
+				vNeedSubcriCode.push_back(it->first);
+			}
+		}
+		bCodeEmpty = (vNeedSubcriCode.size() <= 0);
+		if(!m_pMDApi->SubscriberMd(vNeedSubcriCode)){
+			bRet = false;
+			//LOG
+		}
+	}
+	if(!bRet){
+		m_pMDApi->LogoutMdServer();
+		delete m_pMDApi;
+		m_pMDApi = NULL;
+	}
+	return bRet;
+}
 
+bool Application::qryDeepMarketData(){
+	bool bRet = false;
+	if(NULL != m_pMDApi){
+		//m_pMDApi->LogoutMdServer();
+		delete m_pMDApi;
+		m_pMDApi = NULL;
+	}
+	if(!InitTradeClient()){
+		//
+		return false;
+	}
+	if(0 == m_pTradeApi->CacheQryMd()){
+		//
+		return true;
+	}
+	//
+	return false;
+}
+
+bool Application::qryCommissionRate(){
+	bool bRet = false;
+	
+}
+
+bool Application::mdConnstatus(){
+	if(NULL == m_pMDApi){
+		return false;
+	}
+	if(!m_pMDApi->GetMdConnStatus()){
+		return false;
+	}
+	if(!m_pMDApi->GetMdLoginStatus()){
+		return false;
+	}
+	return true;
+}
 static void* handleCtpConnet(void* arg){
 	//建立并维持与CTP trade Md 的链接并且实时获取行情数据
 	Application* app = (Application*)arg;
@@ -160,9 +246,57 @@ static void* handleCtpConnet(void* arg){
 			}
 			//拉取码表完成开始查询行情快照
 			sys::sleep(1);
-			
+			if(!app->qryDeepMarketData()){
+				// LOG get deep Market Data failed
+				continue;
+			}
+			app->m_bServerIniting = false;
 		}
-	
+		sys::sleep(1);
+		bool bMdConnStatus = app->mdConnstatus();
+		if(!bMdConnStatus || !app->m_bMDSubcribe ||app->m_bTradeDayChange || app->m_bMDNeedReSubcr){
+			app->m_bServerIniting = true;
+			bool bCodeEmpty = false;
+			for(int i =0; i <3;){
+				if((app->m_bMDSubcribe = app->subscribeMd(bCodeEmpty)) == true){
+					//LOG subscibe success
+					app->m_bServerIniting = false;
+					app->m_bMDNeedReSubcr = false;
+					break;
+				}
+				if(3 == ++i){
+					app->resetTradeClient();
+				}
+				
+			}
+			if(bCodeEmpty){
+				app->m_bCodeUpdate = false;
+				continue;
+			}
+			sys::sleep(1);
+		}
+		sys::sleep(1);
+		if(app->m_bTradeDayChange || !app->m_bCommRateUpdate){
+			if((app->m_bCommRateUpdate = app->qryCommissionRate()) == true){
+				// LOG  手续费率查询完
+			}else{
+				//LOG
+				sys::sleep(1);
+				continue;
+			}
+		}
+		if(app->m_bTradeDayChange ){
+			app->m_bTradeDayChange = false;
+			app->loadRiskWarn();
+		}
+		if(app->NeedUpdate()){
+			app->resetTradeClient();
+			sys::sleep(300);	// 5min
+			app->InitTradeClient();
+		}else{
+			app->resetTradeClient();
+			sys::sleep(1);
+		}
 	}
 	return NULL;
 }
@@ -374,4 +508,13 @@ int Application::analyseRequest(int fd, CsockClient* pClient){
 		default:
 			break;
 	}
+}
+
+
+void Application::updateLastMd(const CThostFtdcDepthMarketDataField * pData){
+	CThostFtdcDepthMarketDataField data;
+	memset(&data,0,sizeof(CThostFtdcDepthMarketDataField));
+	memcpy(&data,pData,sizeof(CThostFtdcDepthMarketDataField));
+	std::string strInstrumentID = pData->InstrumentID;
+	m_LastMd.insert(std::make_pair(strInstrumentID,data);
 }

@@ -14,12 +14,22 @@ public:
 	bool Connect2MdServer(const std::vector<std::string>&);
 	bool LoginMdServer();
 	int LogoutMdServer();
-	bool SubscriberMd(std::map<std::string,InstrumentBaseInfo>&);
+	bool SubscriberMd(std::vector<std::string>& vCode);
+
+	inline Application* GetApp(){
+		return m_App;
+	}
 	inline void SetMdConnStatus(bool status){
 		m_bConnStatus = status;
 	}
 	inline bool GetMdConnStatus(){
 		return m_bConnStatus;
+	}
+	inline void SetMdLoginStatus(bool status){
+		m_bLoginStatus = status;
+	}
+	inline bool GetMdLoginStatus(){
+		return m_bLoginStatus;
 	}
 
 private:
@@ -28,7 +38,7 @@ private:
 	CTPMdSpi*				m_mdSpi;
 	SyncEvent				m_ev;
 	bool 					m_bConnStatus;
-	
+	bool					m_bLoginStatus;
 	std::string				m_strFlowPath;
 };
 
@@ -70,10 +80,13 @@ public:
 	inline int getTradeDay(){
 		return m_nTradeDate;
 	}
-
+	inline Application* getApp(){
+		return m_App;
+	}
 public:
 	int CacheLogin();
 	int CacheQryCode();
+	int CacheQryMd();
 private:
 	Application* 					m_App;
 	CThostFtdcTraderApi*			m_pTraderApi;

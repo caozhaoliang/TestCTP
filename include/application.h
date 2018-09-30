@@ -19,7 +19,15 @@ public:
 		return m_CfgXml;
 	}
 	bool qryInstrumentList();
-
+	bool qryDeepMarketData();
+	inline void addInstrumentInfo(std::string strInstrumentID,InstrumentBaseInfo baseInfo){
+		m_InstrumentInfo.insert(std::make_pair(strInstrumentID,baseInfo));
+	}
+	void updateLastMd(const CThostFtdcDepthMarketDataField* pData);
+	bool loadCommRateFile();
+	bool qryDeepMarketData();
+	bool subscribeMd(bool& bCodeEmpty);
+	bool qryCommissionRate();
 public:
 	bool		m_bCodeUpdate;
 	bool		m_bCommRateUpdate;
@@ -68,7 +76,13 @@ private:
 		return 0;
 	}
 	int analyseRequest(int fd, CsockClient* pClient);
-	
+	bool mdConnstatus();
+	inline void resetTradeClient(){
+		if(NULL != m_pTradeApi){
+			delete m_pTradeApi;
+			m_pTradeApi = NULL;
+		}
+	}
 	Application();
 	//static void* handleCtpConnet(void*);
 	void readCallBack(int fd);
@@ -81,6 +95,9 @@ private:
 	int			m_nPort;
 	CMDApi*		m_pMDApi;
 	CTradeApi*	m_pTradeApi;
+	std::map<std::string,InstrumentBaseInfo> 					m_InstrumentInfo;
+	std::map<std::string,CThostFtdcDepthMarketDataField> 		m_LastMd;
+	std::map<std::string,CommissionChargeInfo>					m_CommRate;
 	std::map<int,	CsockClient*>		m_clientMap;
 	CBlockingQueue						m_TaskQueue;
 };

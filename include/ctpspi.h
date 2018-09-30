@@ -56,6 +56,9 @@ public:
 protected:
 	virtual void OnRspUserLogin(CThostFtdcRspUserLoginField * pRspUserLogin,CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast);
 	virtual void OnRspQryInstrument(CThostFtdcInstrumentField * pInstrument,CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast);
+	virtual void OnRspQryDepthMarketData(CThostFtdcDepthMarketDataField * pDepthMarketData,CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast);
+
+	
 private:
 	CThostFtdcTraderApi*	m_traderApi;
 	CTradeApi* 				m_ctpTradeClient;

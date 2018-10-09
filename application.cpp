@@ -152,7 +152,7 @@ bool Application::subscribeMd(bool& bCodeEmpty){
 	bool bRet = true;
 	if(!m_pMDApi->GetMdConnStatus()){
 		std::vector<std::string> vMdAddr;
-		std::string strMdAddr = m_CfgXml->getConfig("Server.MdAddr");
+		std::string strMdAddr = m_CfgXml->getConfig("CTPCfg.MdAddr");
 		vMdAddr.push_back(strMdAddr);
 		if(!m_pMDApi->Connect2MdServer(vMdAddr)){
 			//

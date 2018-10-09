@@ -1,12 +1,7 @@
 #ifndef __GLOBAL_H_1_
 #define __GLOBAL_H_1_
-#include <utility>   
-#include <net/inet.h>
-
-#include <asm/ioctls.h>
 #include <assert.h>
 #include <arpa/inet.h>
-#include <bits/signum.h>
 #include <ctype.h>
 #include <dirent.h> 
 #include <errno.h>
@@ -23,25 +18,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <stdarg.h>             /* ISO C variable arguments */
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/sem.h>
 #include <sys/msg.h>
-#include <sys/types.h>
 #include <sys/time.h>
-#include <sys/wait.h>
-#include <sys/resource.h>
 #include <sys/epoll.h>
-#include <sys/shm.h> 
-#include <sys/sem.h> 
-#include <time.h>
+//#include <time.h>
 #include <unistd.h>
 #include <zlib.h>
 
-#include <typeinfo>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -49,20 +36,20 @@
 #include <set>
 #include <list>
 #include <deque>
-#include <bitset>
 #include <memory>
 #include <iostream>
 #include <fstream>
 //CTP相关头文件
-#include "./include/ThostFtdcMdApi.h"
-#include "./include/ThostFtdcTraderApi.h"
-#include "./include/ThostFtdcUserApiDataType.h"
-#include "./include/ThostFtdcUserApiStruct.h"
+#include "ThostFtdcMdApi.h"
+#include "ThostFtdcTraderApi.h"
+#include "ThostFtdcUserApiDataType.h"
+#include "ThostFtdcUserApiStruct.h"	//ThostFtdcUserApiStruct.h
 //Json 头文件
 #include "../lib/json.h"
 
 //glog 头文件
-#include "./glog/logging.h"
+#include "glog/logging.h"
+#include "glog/raw_logging.h"
 
 using namespace std;
 
@@ -138,7 +125,8 @@ bool dirExist(const std::string& path){
 }
 
 bool makedirs(const std::string& path){
-	return system("mkdir  -p "+path);
+	std::string strCmd = "mkdir -p "+path;
+	return system(strCmd.c_str());
 }
 
 bool rmdirs(const std::string& path){
@@ -146,7 +134,7 @@ bool rmdirs(const std::string& path){
 	struct dirent *pDirent = NULL; 
 
 	if((pDir = opendir(path.c_str())) == NULL){
-		return FALSE;
+		return false;
 	}
 
 	char szBuf[256] = {0};
@@ -295,7 +283,7 @@ class SyncEvent{
             struct timespec timeout;
             int retcode;
  			MutexGuard g(m_mutex);
-            gettimeofday(&now);
+            gettimeofday(&now,NULL);
             timeout.tv_sec = ms / 1000;
             timeout.tv_nsec = ms % 1000 * 1000000;
             retcode = 0;
@@ -322,7 +310,31 @@ class SyncEvent{
 		//DISALLOW_COPY_AND_ASSIGN(SyncEvent);
 	};
 
+namespace str{
+	std::vector<std::string> split(const std::string s,const std::string sep,int max=-1){
+		std::vector<std::string> v;
+    	bool white_separ = (sep[0] == ' ' || sep[0] == '\t');
 
+    	::size_t pos = 0, from = 0;
+    	if (!s.empty() && sep[0] != '\n' && s[0] == sep[0]){
+			from = 1;
+    	}
+	    while ((pos = s.find(sep, from)) != std::string::npos) {
+	        if (!white_separ || pos != from) {
+	            v.push_back(s.substr(from, pos - from));
+	            if (v.size() == max){
+					return v;
+	        	}
+			}
+	        from = pos + 1;
+	    }
+
+    	if (from < s.size()){
+			v.push_back(s.substr(from));
+		}
+    	return v;
+	}
+};
 #endif 
 
 

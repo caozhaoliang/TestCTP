@@ -1,9 +1,10 @@
 #ifndef TIME_H_
 #define TIME_H_
-
+#include <iostream>
 #include "global.h"
 #include <time.h>
 #include <sys/time.h>
+using namespace std;
 
 class CTime
 {

@@ -13,7 +13,7 @@ bool		m_bCodeUpdate;
 */
 Application::Application(){
 }
-Application::Application(const CxmlParse* cfgxml,int nPort)
+Application::Application(CxmlParse* cfgxml,int nPort)
 {
 	m_bCodeUpdate = false;
 	m_bCommRateUpdate = false;
@@ -41,8 +41,10 @@ bool Application::Init(){
 	pthread_t pid[4];
 	int nPid = pthread_create(&pid[0],NULL,handleCtpConnet,this);
 	if(0 != nPid){
+		LOG(INFO) << "pthread_create failed nRet:"<<nPid;
 		return false;
 	}	
+	return true;
 }
 
 bool Application::InitTradeClient(){
@@ -54,6 +56,7 @@ bool Application::InitTradeClient(){
 	// "tcp://192.168.111.222:8080" - "tcp://1.1.1.1:90"
 	if(strFrontTradeAddr.empty() || strFrontTradeAddr.length() <16 ){
 	//print strFrontTradeAddr
+		LOG(ERROR) <<"config.xml TradeAddr is empty";
 		delete m_pTradeApi;
 		m_pTradeApi = NULL;
 		return false;
@@ -92,6 +95,7 @@ bool Application::InitTradeClient(){
 	if(!m_pTradeApi->getCTPConnStatus()){
 		if(!m_pTradeApi->ConnCTPServer(vAddr)){
 			//Error 连接失败
+			LOG(ERROR) <<"Connect to trade front server failed";
 			delete m_pTradeApi;
 			m_pTradeApi = NULL;
 			return false;
@@ -103,9 +107,11 @@ bool Application::InitTradeClient(){
 		if(!m_pTradeApi->getCTPLoginStatus()){
 			if(0 != m_pTradeApi->CacheLogin()){
 				//Error Login 
+				LOG(ERROR) << "Login to trade front failed";
 				m_pTradeApi->setCTPLoginStatus(false);
 				bRet = false;
 			}else{
+				LOG(INFO) << "Login to trade front success";
 				m_pTradeApi->setCTPLoginStatus(true);
 				if(m_nTradeDate<m_pTradeApi->getTradeDay()){
 					m_nTradeDate = m_pTradeApi->getTradeDay();
@@ -124,17 +130,19 @@ bool Application::InitTradeClient(){
 bool Application::qryInstrumentList(){
 	bool bRet = false;
 	if(!InitTradeClient()){
-		//LOG init trade api failed 
+		LOG(ERROR) << "init trade api failed"; 
 		return bRet;
 	}
 	if(m_bTradeDayChange){
 		if(0 == m_pTradeApi->CacheQryCode()){
-			//LOG qryInstrumentList success 
+			LOG(INFO)<<" qryInstrumentList success"; 
 			bRet = true;
 		}else{
+			LOG(ERROR)<<"qryInstrumentList failed";
 			//LOG failed
 		}
 	}else{
+		LOG(INFO) <<"tradeday not change. needn't update";
 		//LOG needn't update 
 		bRet = true;
 	}
@@ -155,7 +163,7 @@ bool Application::subscribeMd(bool& bCodeEmpty){
 		std::string strMdAddr = m_CfgXml->getConfig("CTPCfg.MdAddr");
 		vMdAddr.push_back(strMdAddr);
 		if(!m_pMDApi->Connect2MdServer(vMdAddr)){
-			//
+			LOG(WARNING) << "connect to Martet Front server failed";
 			bRet =  false;
 		}else{
 			bRet = true;
@@ -163,6 +171,7 @@ bool Application::subscribeMd(bool& bCodeEmpty){
 	}
 	if(bRet && m_pMDApi->GetMdConnStatus()&& !m_pMDApi->GetMdLoginStatus()){
 		if(!m_pMDApi->LoginMdServer()){
+			LOG(WARNING)<<"LoginMdServer failed";
 			bRet = false;
 		}else{
 			bRet = true;
@@ -180,7 +189,7 @@ bool Application::subscribeMd(bool& bCodeEmpty){
 		bCodeEmpty = (vNeedSubcriCode.size() <= 0);
 		if(!m_pMDApi->SubscriberMd(vNeedSubcriCode)){
 			bRet = false;
-			//LOG
+			LOG(WARNING) <<"SubscriberMd failed";
 		}
 	}
 	if(!bRet){
@@ -195,18 +204,19 @@ bool Application::qryDeepMarketData(){
 	bool bRet = false;
 	if(NULL != m_pMDApi){
 		//m_pMDApi->LogoutMdServer();
+		LOG(ERROR) << "when aryDeepMarketData CTP Md API was empty";
 		delete m_pMDApi;
 		m_pMDApi = NULL;
 	}
 	if(!InitTradeClient()){
-		//
+		LOG(ERROR) << "InitTradeClient failed";
 		return false;
 	}
 	if(0 == m_pTradeApi->CacheQryMd()){
-		//
+		LOG(INFO) << "CacheQryMd success";
 		return true;
 	}
-	//
+	LOG(WARNING) << "CacheQryMd failed";
 	return false;
 }
 
@@ -230,9 +240,11 @@ bool Application::mdConnstatus(){
 static void* handleCtpConnet(void* arg){
 	//建立并维持与CTP trade Md 的链接并且实时获取行情数据
 	Application* app = (Application*)arg;
+	//do not qry CommRate
+	app->m_bCommRateUpdate = true;
 	while(1){
 		if(app->m_bCodeUpdate && app->m_bCommRateUpdate && CTime::IsWeekEnd(2.5*60*60)){
-			// 
+			LOG(INFO) <<"weekend not querry Market Data.";
 			sys::sleep(60);
 			continue;
 		}
@@ -247,7 +259,7 @@ static void* handleCtpConnet(void* arg){
 			//拉取码表完成开始查询行情快照
 			sys::sleep(1);
 			if(!app->qryDeepMarketData()){
-				// LOG get deep Market Data failed
+				LOG(ERROR)<<" get deep Market Data failed";
 				continue;
 			}
 			app->m_bServerIniting = false;
@@ -259,7 +271,7 @@ static void* handleCtpConnet(void* arg){
 			bool bCodeEmpty = false;
 			for(int i =0; i <3;){
 				if((app->m_bMDSubcribe = app->subscribeMd(bCodeEmpty)) == true){
-					//LOG subscibe success
+					LOG(INFO) << "subscibe success";
 					app->m_bServerIniting = false;
 					app->m_bMDNeedReSubcr = false;
 					break;
@@ -270,11 +282,13 @@ static void* handleCtpConnet(void* arg){
 				
 			}
 			if(bCodeEmpty){
+				LOG(WARNING) << "Subscribe Market data failed";
 				app->m_bCodeUpdate = false;
 				continue;
 			}
 			sys::sleep(1);
 		}
+		/*
 		sys::sleep(1);
 		if(app->m_bTradeDayChange || !app->m_bCommRateUpdate){
 			if((app->m_bCommRateUpdate = app->qryCommissionRate()) == true){
@@ -285,9 +299,10 @@ static void* handleCtpConnet(void* arg){
 				continue;
 			}
 		}
+		*/
 		if(app->m_bTradeDayChange ){
 			app->m_bTradeDayChange = false;
-			app->loadRiskWarn();
+			//app->loadRiskWarn();
 		}
 		if(app->NeedUpdate()){
 			app->resetTradeClient();
@@ -301,7 +316,16 @@ static void* handleCtpConnet(void* arg){
 	return NULL;
 }
 
+bool Application::NeedUpdate(){
+	int curMin = CTime::GetCurIntMinute();
+	return getXmlConfig()->CfgNeedUpdate(curMin)
+}
+
 void Application::Start(){
+	while(1){
+		pause();
+	}
+	
 	// 1 创建epoll侦听端口9091 
 	m_epollfd = epoll_create(1024);
 	if(m_epollfd <0){
@@ -353,7 +377,7 @@ void Application::Start(){
 				char* szAddr=inet_ntoa(clientAddr.sin_addr);
 				int nPort =ntohs(clientAddr.sin_port);
 				client->SetAddr(szAddr,nPort);
-				client->SetConnTime(time(NULL));
+				client->SetConnTime(CTime::GetCurTime());
 				client->SetSockFd(clientfd);
 				m_clientMap.insert(make_pair(clientfd,client));
 				
@@ -442,6 +466,25 @@ void Application::writeCallBack(int fd){
 	}
 	return;
 }
+int Application::closeClient(CsockClient * pClient){
+	if(NULL == pClient){
+		return -1;
+	}
+	int nClientFd = pClient->GetSockFd();
+	if(RemoveEpollFd(nClientFd) < 0){
+		//error
+		return -1;
+	}
+	std::map<int,CsockClient*>::iterator it = m_clientMap.find(nClientFd);
+	if(it == m_clientMap.end()){
+		close(nClientFd);
+		return 0;	//
+	}
+	m_clientMap.erase(it);
+	delete pClient;
+	pClient=NULL;
+	return 0;
+}
 int Application::analyseRequest(int fd, CsockClient* pClient){
 	Json::Value jsonObj;
 	Json::Reader jsonReader;
@@ -511,10 +554,14 @@ int Application::analyseRequest(int fd, CsockClient* pClient){
 }
 
 
-void Application::updateLastMd(const CThostFtdcDepthMarketDataField * pData){
+void Application::updateLastMd(CThostFtdcDepthMarketDataField* pData, int _type){
 	CThostFtdcDepthMarketDataField data;
 	memset(&data,0,sizeof(CThostFtdcDepthMarketDataField));
 	memcpy(&data,pData,sizeof(CThostFtdcDepthMarketDataField));
 	std::string strInstrumentID = pData->InstrumentID;
+	LOG_IF(INFO,_type==1) << "MDPUSH "<<pData->InstrumentID<<"|lastprice:"<<pData->LastPrice<<"|PreSettl:"
+		<<pData->PreSettlementPrice<<"|updatetime:"<<pData->UpdateTime;
+	LOG_IF(INFO,_type==0) << "QUERRY "<<pData->InstrumentID<<"|lastprice:"<<pData->LastPrice<<"|PreSettl:"
+		<<pData->PreSettlementPrice<<"|updatetime:"<<pData->UpdateTime;
 	m_LastMd.insert(std::make_pair(strInstrumentID,data);
 }

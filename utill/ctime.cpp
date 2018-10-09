@@ -1,4 +1,4 @@
-#include "../include/time.h"
+#include "../include/ctime.h"
 
 static void split_token(const std::string& str, std::vector<std::string>& list, const char *token){
 	list.clear();

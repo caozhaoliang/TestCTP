@@ -20,9 +20,11 @@ public:
 	inline double getConfigAsDouble(const std::string& Key){
 		return atof(m_mapConfig[Key].c_str());
 	}
-
+	bool CfgNeedUpdate(int curMin);
 private:
 	std::map<string,string>		m_mapConfig;
+	std::pair<int,int>			m_DayUpdatePeroid;
+	std::pair<int,int>			m_NightUpdatePeroid;
 };
 
 

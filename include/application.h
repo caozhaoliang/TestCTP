@@ -1,10 +1,11 @@
 #ifndef __APPLICATION_H__
 #define __APPLICATION_H__
-#include "./global.h"
+#include "global.h"
 #include <iostream>
 #include "xmlParse.h"
-#include "./include/ctpapi.h"
-
+#include "ctpapi.h"
+#include "sockClient.h"
+#include "contain.h"
 
 class CxmlParse;
 using namespace std;
@@ -12,22 +13,30 @@ using namespace std;
 class Application{
 public:
 	Application(CxmlParse* cfg,int nPort);
-	~Application(){}
+	~Application();
 	bool Init();
 	void Start();
 	inline CxmlParse* getXmlConfig(){
 		return m_CfgXml;
 	}
+	bool InitTradeClient();
 	bool qryInstrumentList();
 	bool qryDeepMarketData();
 	inline void addInstrumentInfo(std::string strInstrumentID,InstrumentBaseInfo baseInfo){
 		m_InstrumentInfo.insert(std::make_pair(strInstrumentID,baseInfo));
 	}
-	void updateLastMd(const CThostFtdcDepthMarketDataField* pData);
+	void updateLastMd(CThostFtdcDepthMarketDataField* pData,int _type = 0);
 	bool loadCommRateFile();
-	bool qryDeepMarketData();
 	bool subscribeMd(bool& bCodeEmpty);
-	bool qryCommissionRate();
+	bool qryCommissionRate();	
+	bool mdConnstatus();
+	inline void resetTradeClient(){
+		if(NULL != m_pTradeApi){
+			delete m_pTradeApi;
+			m_pTradeApi = NULL;
+		}
+	}
+	bool NeedUpdate();
 public:
 	bool		m_bCodeUpdate;
 	bool		m_bCommRateUpdate;
@@ -56,33 +65,9 @@ private:
 		ev.events = EPOLLIN;
 		return epoll_ctl(m_epollfd,EPOLL_CTL_DEL,fd,&ev);
 	}
-	inline int closeClient(CsockClient* pClient){
-		if(NULL == pClient){
-			return -1;
-		}
-		int nClientFd = pClient->GetSockFd();
-		if(RemoveEpollFd(nClientFd) < 0){
-			//error
-			return -1;
-		}
-		std::map<int,CsockClient*>::iterator it = m_clientMap.find(nClientFd);
-		if(it == m_clientMap.end()){
-			close(nClientFd);
-			return 0;	//
-		}
-		m_clientMap.erase(nClientFd);
-		delete pClient;
-		pClient=NULL;
-		return 0;
-	}
+	int closeClient(CsockClient* pClient);
 	int analyseRequest(int fd, CsockClient* pClient);
-	bool mdConnstatus();
-	inline void resetTradeClient(){
-		if(NULL != m_pTradeApi){
-			delete m_pTradeApi;
-			m_pTradeApi = NULL;
-		}
-	}
+	
 	Application();
 	//static void* handleCtpConnet(void*);
 	void readCallBack(int fd);

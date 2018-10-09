@@ -1,7 +1,7 @@
 .PHONY:default all 
 BINFILE := CTPDame
 
-LIBS := z pthread jsoncpp thostmduserapi thosttraderapi
+LIBS := z pthread jsoncpp thostmduserapi thosttraderapi glog gflags
 
 INCS := ./include ./utill
 

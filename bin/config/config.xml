@@ -3,6 +3,15 @@
 <Node>
 	<Server Name="Server" Desc="服务器配置文件父节点名">
 		<Property Name="ListenPort" Value="9091" Desc="服务器侦听端口名称"/>
-		
-	</Server>	
+		<Property Name="UserID" Value="00001" Desc="错单账号"/>
+		<Property Name="BrokerID" Value="9999" Desc="经纪商代码"/>
+		<Property Name="Password" Value="1234" Desc="账号密码"/>
+		<Property Name="DayUpdateTime" Value="08:40-08:55" Desc="更新时间段"/>
+		<Property Name="NightUpdateTime" Value="20:40-20:55" Desc="更新时间段"/>
+	</Server>
+	<Server Name="CTPCfg" Desc="CTP config">		
+		<Property Name="TradeAddr" Value="tcp://192.168.1.1:2010" Desc="交易地址"/>
+		<Property Name="MdAddr" Value="tcp://192.168.1.1:2010" Desc="行情地址"/>
+	
+	</Server>
 </Node>	

@@ -20,14 +20,18 @@ CTPMdSpi::~CTPMdSpi(){
 }
 
 void CTPMdSpi::OnFrontConnected(){
-	//LOG << "连接CTP期货行情服务器成功";
+	LOG(INFO) << "连接CTP期货行情服务器成功";
 	m_ctpmdclient->SetMdConnStatus(true);
 	m_ev.signal();
 }
 
 void CTPMdSpi::OnFrontDisconnected(int nReason){
-	//LOG << "<<<<<<<<<<<<<<<<<<<<CTP期货行情服务器断开连接>>>>>>>>>>>>>>>>>>>>";
+	LOG(WARNING) << "CTP期货行情服务器断开连接";
 	m_ctpmdclient->SetMdConnStatus(false);
+	Application* pApp = m_ctpmdclient->GetApp();
+	if(NULL != pApp){
+		pApp->m_bMDNeedReSubcr = true;
+	}
 }
 
 void CTPMdSpi::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
@@ -55,13 +59,13 @@ void CTPMdSpi::OnRspUserLogout(
 
 void CTPMdSpi::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDepthMarketData){
 	if (NULL == pDepthMarketData){
-		//LOG << "CTP行情应答数据为空";
+		LOG(WARNING) << "OnRtnDepthMarketData CTP行情应答数据为空";
 		return ;
 	}
 	//在订阅行情之前已经在内存中保存了一份行情
 	Application	*pApp = m_ctpmdclient->GetApp();	//APP对象
 	if(NULL != pApp){
-		pApp->updateLastMd(pDepthMarketData);		//更新行情数据
+		pApp->updateLastMd(pDepthMarketData,1);		//更新行情数据
 	}
 }
 
@@ -70,16 +74,16 @@ void CTPMdSpi::OnRspSubMarketData(CThostFtdcSpecificInstrumentField *pSpecificIn
 								  int nRequestID, 
 								  bool bIsLast){
 	if(NULL == pSpecificInstrument){
-		//
+		LOG(WARNING) << "OnRspSubMarketData Return NULL";
 		m_ev.signal();
 		return;
 	}
 	if(pRspInfo != NULL && pRspInfo->ErrorID != 0){
-		//
+		LOG(WARNING) << "OnRspSubMarketData was error:"<<pRspInfo->ErrorID<<":"<<pRspInfo->ErrorMsg;
 		m_ev.signal();
 		return;
 	}
-	//LOG 订阅行情成功 
+	LOG(INFO) << "subscribe:"<<pSpecificInstrument->InstrumentID; 
 	//pSpecificInstrument->InstrumentID;
 	if(bIsLast){
 		m_ev.signal();
@@ -88,7 +92,7 @@ void CTPMdSpi::OnRspSubMarketData(CThostFtdcSpecificInstrumentField *pSpecificIn
 
 void CTPMdSpi::OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
 	if(pRspInfo != NULL && pRspInfo->ErrorID != 0){
-		// LOG OnRsp Error
+		LOG(WARNING) << "OnRsp Error:"<<pRspInfo->ErrorID<<":"<<pRspInfo->ErrorMsg;
 	}
 	return;
 }
@@ -98,12 +102,12 @@ void CTPMdSpi::OnRspUnSubMarketData(CThostFtdcSpecificInstrumentField *pSpecific
 									int nRequestID, 
 									bool bIsLast){
 	if(pSpecificInstrument == NULL){
-		// 退订失败
+		LOG(WARNING) << "OnRspUnSubMarketData return NULL";
 		m_ev.signal();
 		return ;
 	}
 	if(IsErrorRspInfo(pRspInfo)){
-		//
+		LOG(WARNING) << "OnRspUnSubMarketData getError:"<<pRspInfo->ErrorID<<":"<<pRspInfo->ErrorMsg;
 		m_ev.signal();
 		return;
 	}
@@ -116,7 +120,7 @@ void CTPMdSpi::OnRspUnSubMarketData(CThostFtdcSpecificInstrumentField *pSpecific
 }
 
 void CTPMdSpi::OnHeartBeatWarning(int nTimeLapse){
-	//LOG << "收到CTP行情服务器心跳警告,距离上次心跳时间[" << nTimeLapse << "]";
+	LOG(WARNING)<< "OnHeartBeatWarning 收到CTP行情服务器心跳警告";
 }
 
 bool CTPMdSpi::IsErrorRspInfo(CThostFtdcRspInfoField *pRspInfo){
@@ -140,18 +144,18 @@ CTPTradeSpi::IsErrorRspInfo(CThostFtdcRspInfoField * pRspInfo){
 CTPTradeSpi::OnRspQryDepthMarketData(CThostFtdcDepthMarketDataField * pDepthMarketData,
 		CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast){
 	if(NULL == pDepthMarketData){
-		//
+		LOG(WARNING) << "OnRspQryDepthMarketData returns NULL";
 		m_ev.signal();
 		return ;
 	}
 	if(IsErrorRspInfo(pRspInfo)){
-		//
+		LOG(WARNING) << "OnRspQryDepthMarketData getError:"<<pRspInfo->ErrorID<<":"<<pRspInfo->ErrorMsg;
 		m_ev.signal();
 		return ;
 	}
 	Application* pApp = m_ctpTradeClient->getApp();
 	if(NULL == pApp){
-		//
+		LOG(ERROR) << "APP is NULL";
 		return;
 	}
 	pApp->updateLastMd(pDepthMarketData);
@@ -164,12 +168,12 @@ void CTPTradeSpi::OnRspUserLogin(CThostFtdcRspUserLoginField * pRspUserLogin,
 									int nRequestID,bool bIsLast)
 {
 	if(NULL == pRspUserLogin){
-		//LOG error for login
+		LOG(WARNING) << "OnRspUserLogin returns NULL";
 		m_ev.signal();
 		return ;
 	}
 	if(IsErrorRspInfo(pRspInfo)){
-		//LOG error for login
+		LOG(WARNING) << "OnRspUserLogin getError:"<<pRspInfo->ErrorID<<":"<<pRspInfo->ErrorMsg;
 		m_ev.signal();
 		return ;
 	}
@@ -185,12 +189,12 @@ void CTPTradeSpi::OnRspQryInstrument(CThostFtdcInstrumentField * pInstrument,
 									int nRequestID,bool bIsLast)
 {
 	if(NULL == pInstrument){
-		//
+		LOG(WARNING) << "OnRspQryInstrument returns NULL";
 		m_ev.signal();
 		return ;
 	}
 	if(IsErrorRspInfo(pRspInfo)){
-		//
+		LOG(WARNING) << "OnRspQryInstrument getError:"<<pRspInfo->ErrorID<<":"<<pRspInfo->ErrorMsg;
 		m_ev.signal();
 		return ;
 	}
@@ -212,7 +216,8 @@ void CTPTradeSpi::OnRspQryInstrument(CThostFtdcInstrumentField * pInstrument,
 
 void CTPTradeSpi::stdBase2UserBase(CThostFtdcInstrumentField* pSrc,InstrumentBaseInfo* pDst){
 	if(NULL == pSrc || NULL == pDst){
-		return
+		LOG(WARNING)<< "stdBase2UserBase Input Paramete NULL";
+		return;
 	}
 	strnctp(pDst->InstrumentID,pSrc->InstrumentID,sizeof(pDst->InstrumentID));
 	char szTypeID[3] = {0};

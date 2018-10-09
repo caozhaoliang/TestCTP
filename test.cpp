@@ -65,5 +65,8 @@ int test_conn_marketdata(const std::string strAddr){
 
 int test_subscrib(){
 	//¶©ÔÄĞĞÇé
-	
+	while(1){
+		
+
+	}
 }

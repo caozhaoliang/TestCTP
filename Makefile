@@ -1,5 +1,5 @@
 .PHONY:default all 
-BINFILE := CTPDame
+BINFILE := CTPDemo
 
 LIBS := z pthread jsoncpp thostmduserapi thosttraderapi glog gflags
 

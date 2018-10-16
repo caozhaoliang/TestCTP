@@ -21,8 +21,12 @@ int main(int argc, char**argv)
 		return -1;
 	}
 	//初始化日志配置
+	std::string strPath = "./log/";
 	google::InitGoogleLogging("TCTP");
-    google::SetLogDestination(google::INFO,"./log/CTPDemo.log");
+	google::SetLogDestination(google::INFO,"./log/CTPDemo.log");
+	if(!dirExist(strPath)){
+		makedirs(strPath);
+	}
 	//int nRet = 0;
 	#ifdef _TEST_CONN_
 	std::string strAddr = cfgXml.getConfig("CTPCfg.TradeAddr");
@@ -45,11 +49,13 @@ int main(int argc, char**argv)
 		return -1;
 	}
 	LOG(INFO) << "转入后台运行...程序版本:"<<get_version();
+		
 	int nPort = 10086;
 	Application* app = new Application(&cfgXml,nPort);
 	app->Start();
 	
+	
+	//delete app;
 	google::ShutdownGoogleLogging();
-	delete app;
 	return 0;
 }

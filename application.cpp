@@ -54,12 +54,13 @@ bool Application::InitTradeClient(){
 	std::string strBrokerID = getXmlConfig()->getConfig("CTPCfg.BrokerID");
 	std::string strFrontTradeAddr = getXmlConfig()->getConfig("CTPCfg.TradeAddr");
 	// "tcp://192.168.111.222:8080" - "tcp://1.1.1.1:90"
-	if(strFrontTradeAddr.empty() || strFrontTradeAddr.length() <16 ){
+	LOG(INFO) << strUserID<<":"<<strPassword<<":"<<strBrokerID<<":"<<strFrontTradeAddr;
+    if(strFrontTradeAddr.empty() || strFrontTradeAddr.length() <16 ){
 	//print strFrontTradeAddr
 		LOG(ERROR) <<"config.xml TradeAddr is empty";
-		delete m_pTradeApi;
-		m_pTradeApi = NULL;
-		return false;
+	//	delete m_pTradeApi;
+	//	m_pTradeApi = NULL;
+	//	return false;
 	}
 	std::vector<std::string> vAddr;
 	vAddr.push_back(strFrontTradeAddr);
@@ -258,6 +259,7 @@ void* handleCtpConnet(void* arg){
 				sys::sleep(1);
 			}
 			//拉取码表完成开始查询行情快照
+			LOG(INFO) << "[初始化合约列表] 拉取合约列表完成";
 			sys::sleep(1);
 			if(!app->qryDeepMarketData()){
 				LOG(ERROR)<<" get deep Market Data failed";
@@ -288,6 +290,9 @@ void* handleCtpConnet(void* arg){
 				continue;
 			}
 			sys::sleep(1);
+		}
+		if(app->m_bMDSubcribe){
+			LOG(INFO) << "[初始化订阅行情] 行情订阅成功";
 		}
 		/*
 		sys::sleep(1);

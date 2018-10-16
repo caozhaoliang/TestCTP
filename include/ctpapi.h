@@ -1,8 +1,8 @@
 #ifndef __CTPAPI_H__
 #define __CTPAPI_H__
-#include "./global.h"
-#include "./application.h"
-#include "./ctpmdspi.h"
+#include "global.h"
+#include "application.h"
+#include "ctpspi.h"
 
 class Application;
 class CTPMdSpi;
@@ -13,7 +13,7 @@ public:
 	~CMDApi();
 	bool Connect2MdServer(const std::vector<std::string>&);
 	bool LoginMdServer();
-	int LogoutMdServer();
+	bool LogoutMdServer();
 	bool SubscriberMd(std::vector<std::string>& vCode);
 
 	inline Application* GetApp(){
@@ -87,6 +87,7 @@ public:
 	int CacheLogin();
 	int CacheQryCode();
 	int CacheQryMd();
+    bool ConnCTPServer(std::vector<std::string>& vAddr);
 private:
 	Application* 					m_App;
 	CThostFtdcTraderApi*			m_pTraderApi;

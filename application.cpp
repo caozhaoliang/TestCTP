@@ -1,6 +1,6 @@
 #include "./include/application.h"
 #include <pthread.h>
-
+#include "./include/ctime.h"
 
 /*
 bool		m_bCodeUpdate;
@@ -76,21 +76,21 @@ bool Application::InitTradeClient(){
 		memset(&fldReqLogout,0,sizeof(CThostFtdcUserLogoutField));
 		strncpy(fldReqLogout.UserID,strUserID.c_str(),sizeof(fldReqLogout.UserID));
 		strncpy(fldReqLogout.BrokerID,strBrokerID.c_str(),sizeof(fldReqLogout.BrokerID));
-		m_pTradeApi->setReqLogoutParam(fldReqLogout);
+		m_pTradeApi->setReqLogoutParam(&fldReqLogout);
 
 		CThostFtdcQryInstrumentField fldReqCode;
 		memset(&fldReqCode,0,sizeof(CThostFtdcQryInstrumentField));
-		m_pTradeApi->setQryCodeParam(fldReqCode);
+		m_pTradeApi->setQryCodeParam(&fldReqCode);
 
 		CThostFtdcQryDepthMarketDataField fldReqMd;
 		memset(&fldReqMd,0,sizeof(CThostFtdcQryDepthMarketDataField));
-		m_pTradeApi->setQryMarketDataParam(fldReqMd);
+		m_pTradeApi->setQryMarketDataParam(&fldReqMd);
 
 		CThostFtdcQryInstrumentCommissionRateField fldReqComm;
 		memset(&fldReqComm,0,sizeof(CThostFtdcQryInstrumentCommissionRateField));
 		strncpy(fldReqComm.BrokerID,strBrokerID.c_str(),sizeof(fldReqComm.BrokerID));
 		strncpy(fldReqComm.InvestorID,strUserID.c_str(),sizeof(fldReqComm.InvestorID));
-		m_pTradeApi->setQryInsCommRateParam(fldReqComm);		
+		m_pTradeApi->setQryInsCommRateParam(&fldReqComm);		
 	}
 	if(!m_pTradeApi->getCTPConnStatus()){
 		if(!m_pTradeApi->ConnCTPServer(vAddr)){
@@ -179,8 +179,8 @@ bool Application::subscribeMd(bool& bCodeEmpty){
 	}
 	if(bRet){
 		std::vector<std::string> vNeedSubcriCode;
-		std::map<std::string,InstrumentBaseInfo>::iterator it = m_LastMd.begin();
-		for(;it != m_LastMd.end(); ++it){
+		std::map<std::string,InstrumentBaseInfo>::iterator it = m_InstrumentInfo.begin();
+		for(;it != m_InstrumentInfo.end(); ++it){
 			char chProductClass = it->second.ProductClass;
 			if(chProductClass == '1' || chProductClass == '2' || chProductClass == '6'){
 				vNeedSubcriCode.push_back(it->first);
@@ -237,7 +237,7 @@ bool Application::mdConnstatus(){
 	}
 	return true;
 }
-static void* handleCtpConnet(void* arg){
+void* handleCtpConnet(void* arg){
 	//建立并维持与CTP trade Md 的链接并且实时获取行情数据
 	Application* app = (Application*)arg;
 	//do not qry CommRate
@@ -252,6 +252,7 @@ static void* handleCtpConnet(void* arg){
 			app->m_bServerIniting = true;
 			while(1){
 				if((app->m_bCodeUpdate = app->qryInstrumentList())==true){
+					LOG(INFO) << "query instrument list finished";
 					break;
 				}
 				sys::sleep(1);
@@ -318,7 +319,7 @@ static void* handleCtpConnet(void* arg){
 
 bool Application::NeedUpdate(){
 	int curMin = CTime::GetCurIntMinute();
-	return getXmlConfig()->CfgNeedUpdate(curMin)
+	return getXmlConfig()->CfgNeedUpdate(curMin);
 }
 
 void Application::Start(){
@@ -504,7 +505,7 @@ int Application::analyseRequest(int fd, CsockClient* pClient){
 				std::string strUserID = jsonObj["UserID"].asString();
 				std::string strBrokerID = jsonObj["BrokerID"].asString();
 				std::string strPassword = jsonObj["Password"].asString();
-				if(strUserID.empty || strBrokerID.empty()|| strPassword.empty()){
+				if(strUserID.empty() || strBrokerID.empty()|| strPassword.empty()){
 					return -1;
 				}
 				Task* t = new Task;
@@ -524,7 +525,7 @@ int Application::analyseRequest(int fd, CsockClient* pClient){
 				std::string strBrokerID = jsonObj["BrokerID"].asString();
 				std::string strNewPassword = jsonObj["NewPassword"].asString();
 				std::string strOldPassword = jsonObj["OldPassword"].asString();
-				if(strUserID.empty || strBrokerID.empty()|| strNewPassword.empty()|| strOldPassword.empty()){
+				if(strUserID.empty() || strBrokerID.empty()|| strNewPassword.empty()|| strOldPassword.empty()){
 					return -1;
 				}
 				Task* t = new Task;
@@ -542,7 +543,7 @@ int Application::analyseRequest(int fd, CsockClient* pClient){
 				//必须要登录 成功才能登出
 				std::string strUserID = jsonObj["UserID"].asString();
 				std::string strBrokerID = jsonObj["BrokerID"].asString();
-				if(strUserID.empty || strBrokerID.empty()){
+				if(strUserID.empty() || strBrokerID.empty()){
 					return -1;
 				}
 				
@@ -563,5 +564,5 @@ void Application::updateLastMd(CThostFtdcDepthMarketDataField* pData, int _type)
 		<<pData->PreSettlementPrice<<"|updatetime:"<<pData->UpdateTime;
 	LOG_IF(INFO,_type==0) << "QUERRY "<<pData->InstrumentID<<"|lastprice:"<<pData->LastPrice<<"|PreSettl:"
 		<<pData->PreSettlementPrice<<"|updatetime:"<<pData->UpdateTime;
-	m_LastMd.insert(std::make_pair(strInstrumentID,data);
+	m_LastMd.insert(std::make_pair(strInstrumentID,data));
 }

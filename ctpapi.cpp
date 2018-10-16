@@ -7,7 +7,7 @@ class CxmlParse;
 CMDApi::CMDApi(Application* app){
 	m_App = app;
 	
-	std::string strMdAddr = app->getXmlConfig().getConfig("CTPCfg.MdAddr");
+	std::string strMdAddr = app->getXmlConfig()->getConfig("CTPCfg.MdAddr");
 	std::vector<std::string> vMdAddr;
 	vMdAddr.push_back(strMdAddr);
 	Connect2MdServer(vMdAddr);
@@ -71,9 +71,9 @@ bool CMDApi::LoginMdServer(){
 	}
 	CThostFtdcReqUserLoginField reqUserLogin;
 	memset(&reqUserLogin,0,sizeof(CThostFtdcReqUserLoginField));
-	std::string strUserID = m_App->getXmlConfig().getConfig("Server.UserID");
-	std::string strPassword = m_App->getXmlConfig().getConfig("Server.Password");
-	std::string strBrokerID = m_App->getXmlConfig().getConfig("Server.BrokerID");
+	std::string strUserID = m_App->getXmlConfig()->getConfig("Server.UserID");
+	std::string strPassword = m_App->getXmlConfig()->getConfig("Server.Password");
+	std::string strBrokerID = m_App->getXmlConfig()->getConfig("Server.BrokerID");
 	strncpy(reqUserLogin.UserID,strUserID.c_str(),sizeof(reqUserLogin.UserID));
 	strncpy(reqUserLogin.Password,strPassword.c_str(),sizeof(reqUserLogin.Password));
 	strncpy(reqUserLogin.BrokerID,strBrokerID.c_str(),sizeof(reqUserLogin.BrokerID));
@@ -94,13 +94,13 @@ bool CMDApi::LogoutMdServer(){
 		return false;
 	}
 	CThostFtdcUserLogoutField reqUserLogout;
-	std::string strUserID = m_App->getXmlConfig().getConfig("Server.UserID");
-	std::string strBrokerID = m_App->getXmlConfig().getConfig("Server.BrokerID");
+	std::string strUserID = m_App->getXmlConfig()->getConfig("Server.UserID");
+	std::string strBrokerID = m_App->getXmlConfig()->getConfig("Server.BrokerID");
 	strncpy(reqUserLogout.UserID,strUserID.c_str(),sizeof(reqUserLogout.UserID));
 	strncpy(reqUserLogout.BrokerID,strBrokerID.c_str(),sizeof(reqUserLogout.BrokerID));
 	int nRet = m_mdApi->ReqUserLogout(&reqUserLogout,10001);
 	if(0 != nRet){
-		LOG(ERROR)<<strUserID <<" logout failed"
+		LOG(ERROR)<<strUserID <<" logout failed";
 		return false;
 	}
 	LOG(INFO) << "ReqUserLogout success";
@@ -112,7 +112,7 @@ bool CMDApi::SubscriberMd(std::vector<std::string>& vCode){
 	}
 	int nCount = vCode.size();
 	char* Instruments[nCount] ;
-	std::vector<std::string>::iterator it = vCode.beign();
+	std::vector<std::string>::iterator it = vCode.begin();
 	for(int i = 0;i< nCount && it!=vCode.end();++i,++it){
 		Instruments[i] =(char*)it->c_str();
 	}
@@ -228,9 +228,10 @@ bool CTradeApi::ConnCTPServer(std::vector<std::string>& vAddr){
 		LOG(ERROR) << "new CTPTradeSpi ptr is NULL";
 		return false;
 	}
-	m_pTraderApi->RegisterSpi(m_pTraderSpi);
-	m_pTraderApi->SubscribePublicTopic(2);
-	m_pTraderApi->SubscribePrivateTopic(2);
+    THOST_TE_RESUME_TYPE resumType = THOST_TERT_QUICK;
+    m_pTraderApi->RegisterSpi(m_pTraderSpi);
+    m_pTraderApi->SubscribePublicTopic(resumType);
+    m_pTraderApi->SubscribePrivateTopic(resumType);
 	for(std::vector<std::string>::iterator it = vAddr.begin();it!=vAddr.end();++it){
 		m_pTraderApi->RegisterFront((char*)it->c_str());
 	}

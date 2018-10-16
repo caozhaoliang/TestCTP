@@ -1,5 +1,7 @@
 #include "./include/contain.h"
 
+#define     BUFFER_STEP_LENGTH 512
+
 CBuffer::CBuffer()
 {
     m_nBufferSize = 0;

@@ -8,7 +8,11 @@
 #include "contain.h"
 
 class CxmlParse;
+class CMDApi;
+class CTradeApi;
 using namespace std;
+    
+void* handleCtpConnet(void* arg);
 
 class Application{
 public:

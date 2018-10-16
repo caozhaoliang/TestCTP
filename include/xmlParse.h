@@ -21,6 +21,7 @@ public:
 		return atof(m_mapConfig[Key].c_str());
 	}
 	bool CfgNeedUpdate(int curMin);
+    void dealUpdatePeroid();
 private:
 	std::map<string,string>		m_mapConfig;
 	std::pair<int,int>			m_DayUpdatePeroid;

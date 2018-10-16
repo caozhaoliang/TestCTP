@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "./includ/xmlParse.h"
+#include "./include/xmlParse.h"
 #include "./include/global.h"
 #include "./include/application.h"
 #include "./include/test.h"
@@ -22,7 +22,8 @@ int main(int argc, char**argv)
 	}
 	//初始化日志配置
 	google::InitGoogleLogging("TCTP");
-	int nRet = 0;
+    google::SetLogDestination(google::INFO,"./log/CTPDemo.log");
+	//int nRet = 0;
 	#ifdef _TEST_CONN_
 	std::string strAddr = cfgXml.getConfig("CTPCfg.TradeAddr");
 	nRet = test_conn_trade(strAddr);
@@ -43,11 +44,12 @@ int main(int argc, char**argv)
 	if(daemon(1,0)){		//转入后台运行
 		return -1;
 	}
+	LOG(INFO) << "转入后台运行...程序版本:"<<get_version();
 	int nPort = 10086;
-	Application* app = new Application(cfgXml,nPort);
+	Application* app = new Application(&cfgXml,nPort);
 	app->Start();
 	
 	google::ShutdownGoogleLogging();
 	delete app;
-	return;
+	return 0;
 }

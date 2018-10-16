@@ -15,7 +15,7 @@ endif
 CFLAGS = -g -Wall #-pg -O2
 CC = g++
 
-COMMONSRCS = $(wildcard ./*.cpp ./utill/xml/*.cpp)
+COMMONSRCS = $(wildcard ./*.cpp ./utill/*.cpp ./utill/xml/*.cpp)
 
 COMMONOBJS = $(patsubst %.cpp,%.o,$(COMMONSRCS))
 

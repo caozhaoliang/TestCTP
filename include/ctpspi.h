@@ -1,6 +1,6 @@
 #ifndef _FTD_CTPSPI_H_
 #define _FTD_CTPSPI_H_
-#include "./global.h"
+#include "global.h"
 class CMDApi;
 class CTradeApi;
 
@@ -53,6 +53,7 @@ public:
 	CTPTradeSpi(CThostFtdcTraderApi* pClientApi,CTradeApi* pClient,SyncEvent& ev);
 	~CTPTradeSpi();
 	bool IsErrorRspInfo(CThostFtdcRspInfoField * pRspInfo);
+    void stdBase2UserBase(CThostFtdcInstrumentField* pSrc,InstrumentBaseInfo* pDst);
 protected:
 	virtual void OnRspUserLogin(CThostFtdcRspUserLoginField * pRspUserLogin,CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast);
 	virtual void OnRspQryInstrument(CThostFtdcInstrumentField * pInstrument,CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast);

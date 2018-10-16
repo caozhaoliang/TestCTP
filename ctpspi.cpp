@@ -138,10 +138,10 @@ CTPTradeSpi::~CTPTradeSpi(){
 		m_ctpTradeClient=NULL;
 	}
 }
-CTPTradeSpi::IsErrorRspInfo(CThostFtdcRspInfoField * pRspInfo){
+bool CTPTradeSpi::IsErrorRspInfo(CThostFtdcRspInfoField * pRspInfo){
 	return ((NULL != pRspInfo) && (pRspInfo->ErrorID != 0));
 }
-CTPTradeSpi::OnRspQryDepthMarketData(CThostFtdcDepthMarketDataField * pDepthMarketData,
+void CTPTradeSpi::OnRspQryDepthMarketData(CThostFtdcDepthMarketDataField * pDepthMarketData,
 		CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast){
 	if(NULL == pDepthMarketData){
 		LOG(WARNING) << "OnRspQryDepthMarketData returns NULL";
@@ -219,7 +219,7 @@ void CTPTradeSpi::stdBase2UserBase(CThostFtdcInstrumentField* pSrc,InstrumentBas
 		LOG(WARNING)<< "stdBase2UserBase Input Paramete NULL";
 		return;
 	}
-	strnctp(pDst->InstrumentID,pSrc->InstrumentID,sizeof(pDst->InstrumentID));
+	strncpy(pDst->InstrumentID,pSrc->InstrumentID,sizeof(pDst->InstrumentID));
 	char szTypeID[3] = {0};
 	strncpy(szTypeID,pDst->InstrumentID,2);
 	if(szTypeID[1] >='0' && szTypeID[1] <= '9'){

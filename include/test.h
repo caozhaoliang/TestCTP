@@ -2,9 +2,9 @@
 #define _TEST_H__
 #include <iostream>
 #include <pthread.h>
-#include "./global.h"
+#include "global.h"
 
-class CTestTradeSpi : public CThostFtdcTraderSpi{
+class CTestTradeSpi: public CThostFtdcTraderSpi{
 public:
 	CTestTradeSpi(CThostFtdcTraderApi *pClientApi);
 	~CTestTradeSpi();
@@ -25,17 +25,14 @@ private:
 	CThostFtdcTraderApi *	pTApi;
 };
 class CTestMarketSpi: public CThostFtdcMdSpi{
-	CTestMarketSpi(CThostFtdcMdApi* pClientApi);
+public:
+    CTestMarketSpi(CThostFtdcMdApi* pClientApi);
 	~CTestMarketSpi();
 	//当客户端与交易托管系统建立起通信连接，客户端需要进行登录
 	virtual	void OnFrontConnected();
 
 	//当客户端与交易托管系统通信连接断开时，该方法被调用
 	virtual	void OnFrontDisconnected(int	nReason);
-
-	//当客户端发出登录请求之后，该方法会被调用，通知客户端登录是否成功
-	virtual	void OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
-		CThostFtdcRspInfoField *pRspInfo,int	nRequestID,bool bIsLast);
 
 private:
 	CThostFtdcMdApi* 		pMarketApi;

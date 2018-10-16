@@ -22,11 +22,13 @@ int CxmlParse::Load(const char* cfgPath){
 	TiXmlDocument doc;
 	if(!doc.LoadFile(cfgPath)){
 		std::cerr<<"TiXmlDocument LoadFile failed"<<std::endl;
-		return -3;
+		doc.Clear();
+        return -3;
 	}
 	TiXmlElement* root = doc.FirstChildElement("Node");	//<Node>
 	if(NULL == root){
 		std::cerr<<"childElement(node) not exist"<<std::endl;
+	    doc.Clear();
 		return -4;
 	}
 	TiXmlElement* chNode=root->FirstChildElement();		
@@ -44,7 +46,7 @@ int CxmlParse::Load(const char* cfgPath){
 		}
 		chNode = chNode->NextSiblingElement();
 	}
-	doc.close();
+	doc.Clear();
 	dealUpdatePeroid();
 	return 0;
 }

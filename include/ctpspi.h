@@ -55,6 +55,8 @@ public:
 	bool IsErrorRspInfo(CThostFtdcRspInfoField * pRspInfo);
     void stdBase2UserBase(CThostFtdcInstrumentField* pSrc,InstrumentBaseInfo* pDst);
 protected:
+    virtual void OnFrontConnected();
+    virtual void OnFrontDisconnected(int nReason);
 	virtual void OnRspUserLogin(CThostFtdcRspUserLoginField * pRspUserLogin,CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast);
 	virtual void OnRspQryInstrument(CThostFtdcInstrumentField * pInstrument,CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast);
 	virtual void OnRspQryDepthMarketData(CThostFtdcDepthMarketDataField * pDepthMarketData,CThostFtdcRspInfoField * pRspInfo,int nRequestID,bool bIsLast);

@@ -141,7 +141,7 @@ CTradeApi::~CTradeApi(){
 	m_bConnStatus=false;
 	m_bLoginStatus = false;
 	if(m_pTraderApi != NULL){
-		m_pTraderApi->RegisterSpi(NULL);
+		//m_pTraderApi->RegisterSpi(NULL);
 		m_pTraderApi->Release();
 		m_pTraderApi = NULL;
 	}
@@ -158,7 +158,7 @@ int CTradeApi::CacheLogin(){
 		LOG(ERROR) << "trade API is NULL";
 		return -1;
 	}
-	int nRet = m_pTraderApi->ReqUserLogin(&m_ReqLogin,10001);
+	int nRet = m_pTraderApi->ReqUserLogin(&m_ReqLogin,-10001);
 	if(0 == nRet){
 		if(!m_ev.timed_wait(5000)){
 			LOG(WARNING) <<"ReqUserLogin timeout";
@@ -175,7 +175,7 @@ int CTradeApi::CacheQryCode(){
 		LOG(ERROR) << "trade API is NULL";
 		return -1;
 	}
-	int nRet = m_pTraderApi->ReqQryInstrument(&m_ReqCode,10001);
+	int nRet = m_pTraderApi->ReqQryInstrument(&m_ReqCode,-10001);
 	if(0 == nRet){
 		if(!m_ev.timed_wait(5000)){
 			LOG(WARNING) << "ReqQryInstrument error timeout";
@@ -191,7 +191,7 @@ int CTradeApi::CacheQryMd(){
 		LOG(ERROR) << "trade API is NULL";
 		return -1;
 	}
-	int nRet = m_pTraderApi->ReqQryDepthMarketData(&m_ReqMd,10001);
+	int nRet = m_pTraderApi->ReqQryDepthMarketData(&m_ReqMd,-10001);
 	if(0 == nRet){
 		if(!m_ev.timed_wait(6000)){
 			LOG(WARNING) << "ReqQryDepthMarketData error timeout";
@@ -228,10 +228,10 @@ bool CTradeApi::ConnCTPServer(std::vector<std::string>& vAddr){
 		LOG(ERROR) << "new CTPTradeSpi ptr is NULL";
 		return false;
 	}
-    THOST_TE_RESUME_TYPE resumType = THOST_TERT_QUICK;
-    m_pTraderApi->RegisterSpi(m_pTraderSpi);
-    m_pTraderApi->SubscribePublicTopic(resumType);
-    m_pTraderApi->SubscribePrivateTopic(resumType);
+	THOST_TE_RESUME_TYPE resumType = THOST_TERT_QUICK;
+	m_pTraderApi->RegisterSpi(m_pTraderSpi);
+	m_pTraderApi->SubscribePublicTopic(resumType);
+	m_pTraderApi->SubscribePrivateTopic(resumType);
 	for(std::vector<std::string>::iterator it = vAddr.begin();it!=vAddr.end();++it){
 		m_pTraderApi->RegisterFront((char*)it->c_str());
 	}

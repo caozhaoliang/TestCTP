@@ -24,6 +24,7 @@
 #include <sys/sem.h>
 #include <sys/msg.h>
 #include <sys/time.h>
+#include <time.h>
 #include <sys/epoll.h>
 //#include <time.h>
 #include <unistd.h>
@@ -183,11 +184,11 @@ class SyncEvent{
 	public:
 		explicit SyncEvent(bool manual_reset=false,bool signaled=false)
 			:m_manual_reset(manual_reset),m_signaled(signaled){
-			//pthread_condattr_t	attr;
-			//CHECK(pthread_condattr_init(&attr) == 0);
-			//CHECK(pthread_condattr_setclock(&attr,CLOCK_MONOTONIC) == 0);
-			//CHECK(pthread_cond_init(&m_cond,&attr) == 0);
-			//CHECK(pthread_condattr_destroy(&attr) == 0);
+			pthread_condattr_t	attr;
+			pthread_condattr_init(&attr);
+			pthread_condattr_setclock(&attr,CLOCK_MONOTONIC);
+			pthread_cond_init(&m_cond,&attr) ;
+			pthread_condattr_destroy(&attr) ;
 			pthread_cond_init(&m_cond,NULL);
 		}
 
@@ -223,26 +224,7 @@ class SyncEvent{
 			if(!m_manual_reset)	m_signaled = false;//(如果为自动重置，则将信号重置)
 		}
 
-		bool timed_wait(unsigned int ms){
-			struct timeval now;
-            struct timespec timeout;
-            int retcode;
- 			MutexGuard g(m_mutex);
-            gettimeofday(&now,NULL);
-            timeout.tv_sec = ms / 1000;
-            timeout.tv_nsec = ms % 1000 * 1000000;
-            retcode = 0;
-            while (retcode != ETIMEDOUT) {
-            	retcode = pthread_cond_timedwait(&m_cond, m_mutex.mutex(), &timeout);
-           	}
-            if (retcode == ETIMEDOUT) {
-            	return false;
-            }
-			if(!m_manual_reset){
-				m_signaled = false;
-			}
-			return true;
-		}
+		bool timed_wait(unsigned int ms);
 
 	private:
 		pthread_cond_t	m_cond;

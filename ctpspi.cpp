@@ -138,6 +138,13 @@ CTPTradeSpi::~CTPTradeSpi(){
 		m_ctpTradeClient=NULL;
 	}
 }
+void CTPTradeSpi::OnFrontConnected(){
+	LOG(INFO) << "Connect to Trade Front Success!";
+	m_ev.signal();
+}
+void CTPTradeSpi::OnFrontDisconnected(int nReason){
+	LOG(INFO) << "Disconnect to Trade Front! nReason:"<<nReason;
+}
 bool CTPTradeSpi::IsErrorRspInfo(CThostFtdcRspInfoField * pRspInfo){
 	return ((NULL != pRspInfo) && (pRspInfo->ErrorID != 0));
 }

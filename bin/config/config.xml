@@ -10,8 +10,8 @@
 		<Property Name="UserID" Value="10001437" Desc="错单账号"/>
 		<Property Name="BrokerID" Value="8080" Desc="经纪商代码"/>
 		<Property Name="Password" Value="datong888" Desc="账号密码"/>
-		<Property Name="TradeAddr" Value="tcp://121.15.173.86:27205" Desc="交易地址"/>
-		<Property Name="MdAddr" Value="tcp://121.15.173.86:27215" Desc="行情地址"/>
+		<Property Name="TradeAddr" Value="tcp://121.15.173.87:27205" Desc="交易地址 173.86"/>
+		<Property Name="MdAddr" Value="tcp://121.15.173.87:27215" Desc="行情地址"/>
 	
 	</Server>
 </Node>	

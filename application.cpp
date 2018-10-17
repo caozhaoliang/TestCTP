@@ -104,7 +104,7 @@ bool Application::InitTradeClient(){
 		m_pTradeApi->setCTPConnStatus(true);
 		bRet = true;
 	}
-	if(bRet){
+	if(m_pTradeApi->getCTPConnStatus()){
 		if(!m_pTradeApi->getCTPLoginStatus()){
 			if(0 != m_pTradeApi->CacheLogin()){
 				//Error Login 
@@ -124,6 +124,8 @@ bool Application::InitTradeClient(){
 				}
 			}
 			
+		}else{
+			bRet = true;//ÒÑ¾­µÇÂ¼ÁË
 		}
 	}
 	return bRet;

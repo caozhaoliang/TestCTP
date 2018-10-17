@@ -67,6 +67,20 @@ bool isPortUsed(int nPort){
 	}
 	return true;
 }
+bool SyncEvent::timed_wait(unsigned int ms){
+	MutexGuard g(m_mutex);
+	if (!m_signaled) {
+		struct timespec ts;
+		struct timeval now;
+		gettimeofday(&now,NULL);
+		ts.tv_sec =now.tv_sec + ms/1000;
+		ts.tv_nsec =0;
+		int ret = pthread_cond_timedwait(&m_cond, m_mutex.mutex(), &ts);
+		if (ret == ETIMEDOUT) return false;
+	}
+	if (!m_manual_reset) m_signaled = false;
+	return true;
+}
 namespace str{
 	std::vector<std::string> split(const std::string s,const std::string sep,int max){
 		std::vector<std::string> v;

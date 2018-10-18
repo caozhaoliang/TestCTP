@@ -23,7 +23,8 @@ public:
 	inline CxmlParse* getXmlConfig(){
 		return m_CfgXml;
 	}
-	bool InitTradeClient();
+	bool Connect2Trade(CTradeApi* pTradeApi);
+    bool InitTradeClient();
 	bool qryInstrumentList();
 	bool qryDeepMarketData();
 	inline void addInstrumentInfo(std::string strInstrumentID,InstrumentBaseInfo baseInfo){

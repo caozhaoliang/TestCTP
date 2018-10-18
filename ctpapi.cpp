@@ -170,6 +170,12 @@ int CTradeApi::CacheLogin(){
 	}
 	return nRet;
 }
+const char* CTradeApi::getVersion(){
+	if(NULL == m_pTraderApi){
+		return "";
+	}
+	return m_pTraderApi->GetApiVersion();
+}
 int CTradeApi::CacheQryCode(){
 	if(NULL == m_pTraderApi){		
 		LOG(ERROR) << "trade API is NULL";
@@ -223,6 +229,7 @@ bool CTradeApi::ConnCTPServer(std::vector<std::string>& vAddr){
 		LOG(ERROR) << "CreateFtdcTraderApi returns NULL";
 		return false;
 	}
+	LOG(INFO) << "TradeAPI Version:"<<m_pTraderApi->GetApiVersion();
 	m_pTraderSpi = new CTPTradeSpi(m_pTraderApi,this,m_ev);
 	if(NULL == m_pTraderSpi){
 		LOG(ERROR) << "new CTPTradeSpi ptr is NULL";

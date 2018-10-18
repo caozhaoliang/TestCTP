@@ -35,8 +35,28 @@ Application::~Application(){
 		m_pTradeApi = NULL;
 	}
 }
-
+bool Application::Connect2Trade(CTradeApi* pTradeApi){
+	
+	if(NULL == pTradeApi){
+		LOG(ERROR)<<"Empty CTradeApi";
+		return false;
+	}
+	std::string strFrontTradeAddr = getXmlConfig()->getConfig("CTPCfg.TradeAddr");
+	std::vector<std::string> vAddr;
+	vAddr.push_back(strFrontTradeAddr);
+	if(!pTradeApi->ConnCTPServer(vAddr)){
+		return false;
+	}
+	return true;
+}
 bool Application::Init(){
+	while(1){
+		CTradeApi* pTradeApi = new CTradeApi(this);
+		Connect2Trade(pTradeApi);
+		delete pTradeApi;
+		pTradeApi = NULL;
+		sys::sleep(1);
+	}
 	
 	pthread_t pid[4];
 	int nPid = pthread_create(&pid[0],NULL,handleCtpConnet,this);

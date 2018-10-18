@@ -84,6 +84,7 @@ public:
 		return m_App;
 	}
 public:
+	const char* getVersion();
 	int CacheLogin();
 	int CacheQryCode();
 	int CacheQryMd();
